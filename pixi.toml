@@ -1,0 +1,53 @@
+[workspace]
+authors = ["Sierra Arn"]
+channels = ["conda-forge", "nvidia"]
+name = "pose-estimation-service"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[dependencies]
+python = "*"
+opencv = "*"
+pydantic-settings = "*"
+ffmpeg-python = "*"
+boto3 = "*"
+fastapi = "*"
+uvicorn = "*"
+just = "*"
+
+[feature.gpu.system-requirements]
+cuda = "12.8"
+
+[feature.gpu.dependencies]
+cuda-toolkit = ">=12.8.0,<12.9"
+pytorch-gpu = "*"
+ultralytics = "*"
+torchvision = "*"
+
+[feature.cpu.dependencies]
+pytorch-cpu = "*"
+ultralytics = "*"
+torchvision = "*"
+
+[feature.test.dependencies]
+ipykernel = "*"
+
+[environments]
+cpu = ["cpu"]
+gpu = ["gpu"]
+cpu-test = ["cpu", "test"]
+gpu-test = ["gpu", "test"]
+
+[tasks]
+
+start-api = "python -m app.rest.main"
+
+[tasks.start-api-gpu]
+depends-on = [
+  { task = "start-api", environment = "gpu" }
+]
+
+[tasks.start-api-cpu]
+depends-on = [
+  { task = "start-api", environment = "cpu" }
+]

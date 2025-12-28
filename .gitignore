@@ -1,0 +1,13 @@
+# VS Code
+.vscode/
+
+# Environments
+.pixi/*
+!.pixi/config.toml
+.env
+
+# Python-generated files
+__pycache__/
+
+# MinIO-specific files
+minio-data/
