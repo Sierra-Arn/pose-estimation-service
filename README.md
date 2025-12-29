@@ -92,7 +92,7 @@ the IPython kernel for Jupyter, enabling interactive notebook development and se
 
 3. **Setup environment configuration**
    ```bash
-   just copy-env
+   pixi run just copy-env
    ```
 
 ### **III. Model Setup**
