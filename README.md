@@ -24,7 +24,7 @@ pose-estimation-service/
 ├── justfile                    # Project-specific commands using Just
 ├── pixi.lock                   # Locked dependency versions for reproducible environments
 ├── pixi.toml                   # Pixi project configuration: environments, dependencies, 
-|                               # platforms and environment-specific commands
+│                               # platforms and environment-specific commands
 └── playground-testing/         # Jupyter notebooks for step-by-step validation 
                                 # of the full pose estimation pipeline logic
 ```
