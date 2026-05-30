@@ -1,0 +1,21 @@
+# VS Code
+.vscode/
+
+# Environments
+.pixi/*
+!.pixi/config.toml
+.env
+
+# Python-generated files
+__pycache__/
+
+# Docker init files with embedded credentials
+docker/**/init/
+
+# ML-specifc files
+*.pt
+sam-3d-body-vith/
+
+# Test artifacts
+*.mp4
+*.yaml

@@ -1,0 +1,5 @@
+# **Generic single-database configuration**
+
+- This is a generic single-database configuration for Alembic migrations.
+- No modifications have been made to `alembic.ini` or `script.py.mako` files. 
+- All customizations for this project are implemented in `env.py`.

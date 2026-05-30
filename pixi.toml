@@ -1,0 +1,74 @@
+[workspace]
+authors = ["Sierra Arn"]
+channels = ["nvidia", "conda-forge"]
+name = "pose-estimation-service"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[dependencies]
+python = "*"
+python-dotenv = "*"
+just = "*"
+
+[feature.common.dependencies]
+python = "*"
+pydantic-settings = "*"
+
+[feature.s3.dependencies]
+boto3 = "*"
+aioboto3 = "*"
+safetensors = "*"
+av = "*"
+ffmpeg = "*"
+
+[feature.db.dependencies]
+sqlalchemy = "*"
+alembic = "*"
+psycopg2-binary = "*"
+asyncpg = "*"
+
+[feature.tasks.dependencies]
+redis-py = "*"
+celery = "*"
+
+[feature.api.dependencies]
+fastapi = "*"
+uvicorn = "*"
+python-json-logger = "*"
+
+[feature.ml-common.dependencies]
+jaxtyping = "*"
+opencv = "*"
+torchvision = "*"
+ultralytics = "*"
+timm = "*"
+
+[feature.ml-common.pypi-dependencies]
+roma = "*"
+ensam3d-lib = { git = "https://github.com/Sierra-Arn/ensam3d-lib.git" }
+
+[feature.ml-inference.system-requirements]
+cuda = "12.8"
+
+[feature.ml-inference.dependencies]
+cuda-toolkit = ">=12.8.0,<12.9"
+pytorch-gpu = "*"
+
+[feature.ml-default.dependencies]
+pytorch-cpu = "*"
+
+[environments.full]
+features = ["common", "s3", "db", "tasks", "api", "ml-common", "ml-inference"]
+no-default-feature = true
+
+[environments.server]
+features = ["common", "s3", "db", "tasks", "api"]
+no-default-feature = true
+
+[environments.worker-inference]
+features = ["common", "s3", "db", "tasks", "ml-common", "ml-inference"]
+no-default-feature = true
+
+[environments.worker-default]
+features = ["common", "s3", "db", "tasks", "ml-common", "ml-default"]
+no-default-feature = true
