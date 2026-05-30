@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# app/workers/inference/tasks/run_ensam3d/output_uploader.py
+# app/workers/inference/tasks/estimate/output_uploader.py
 from pathlib import Path
 from ensam3d_inference import PipelineOutput
 from ....task_infra.tensors_io import save_pipeline_output

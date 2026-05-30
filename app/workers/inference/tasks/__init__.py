@@ -13,4 +13,4 @@
 # limitations under the License.
 
 # app/workers/inference/tasks/__init__.py
-from .run_ensam3d import run_ensam3d_task
+from .estimate import estimate_task

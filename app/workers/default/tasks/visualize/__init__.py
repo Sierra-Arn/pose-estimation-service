@@ -24,7 +24,7 @@ from ....task_queue.config import celery_config
 
 
 @celery_app.task(
-    name="visualize_task",
+    name="visualize",
     queue=celery_config.queue_name_default,
 )
 def visualize_task(

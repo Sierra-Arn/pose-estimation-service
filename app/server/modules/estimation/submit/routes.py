@@ -20,7 +20,7 @@ from ..router import estimation_router
 from ...task.schemas import TaskResponse
 from ...video.utils import get_video_or_404
 from .....shared.postgres import get_async_db_session
-from .....workers.inference.tasks.run_ensam3d import run_ensam3d_task
+from .....workers.inference.tasks.estimate import estimate_task
 
 
 @estimation_router.post(
@@ -65,7 +65,7 @@ async def submit_estimation_route(
     video = await get_video_or_404(session, request.video_id)
 
     try:
-        async_result = run_ensam3d_task.delay(
+        async_result = estimate_task.delay(
             source_storage_key=video.storage_key,
             video_id=request.video_id,
             target_width=request.target_width,

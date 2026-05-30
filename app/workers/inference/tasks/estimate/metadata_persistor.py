@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# app/workers/inference/tasks/run_ensam3d/metadata_persistor.py
+# app/workers/inference/tasks/estimate/metadata_persistor.py
 from .....shared.postgres import get_sync_db_session, Estimation
 
 

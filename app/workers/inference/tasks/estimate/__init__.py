@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# app/workers/inference/tasks/run_ensam3d/__init__.py
+# app/workers/inference/tasks/estimate/__init__.py
 from typing import Any
 from ....task_infra.types import TaskType, TaskResultPayload
 from ....task_queue.config import celery_config
@@ -20,10 +20,10 @@ from ....task_queue.instance import celery_app
 
 
 @celery_app.task(
-    name="run_ensam3d",
+    name="estimate",
     queue=celery_config.queue_name_inference,
 )
-def run_ensam3d_task(
+def estimate_task(
     source_storage_key: str,
     video_id: int,
     target_width: int,
