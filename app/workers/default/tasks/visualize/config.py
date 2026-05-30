@@ -31,8 +31,6 @@ class VisualizerConfig:
     ----------
     bbox_color : tuple of int
         OpenCV BGR color for detection bounding boxes.
-    keypoint_color : tuple of int
-        OpenCV BGR color for individual keypoint markers.
     text_color : tuple of int
         OpenCV BGR color for confidence score labels.
     overlay_alpha : float
@@ -51,7 +49,6 @@ class VisualizerConfig:
     """
 
     bbox_color: tuple[int, int, int] = (0, 255, 0)
-    keypoint_color: tuple[int, int, int] = (0, 0, 255)
     text_color: tuple[int, int, int] = (255, 255, 255)
     overlay_alpha: float = 0.6
     line_thickness: int = 2

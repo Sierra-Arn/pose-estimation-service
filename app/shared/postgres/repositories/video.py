@@ -23,6 +23,7 @@ from ..models import Video, Estimation, Visualization
 class VideoRepository(BaseRepository):
     """
     Stateless data access implementation for the Video ORM model.
+    
     Provides asynchronous and synchronous query operations for video
     metadata, storage key validation, pagination, and dependency
     resolution for cascade cleanup.

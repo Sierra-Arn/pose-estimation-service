@@ -24,7 +24,6 @@ class EstimationRepository(BaseRepository):
     """
     Stateless data access implementation for the Estimation ORM model.
     
-    Stateless data access implementation for the Estimation ORM model.
     Provides type-safe query and persistence operations for 3D pose
     estimation records, including creation, primary key lookup, deletion,
     idempotency checks, and dependency resolution for cascade cleanup.

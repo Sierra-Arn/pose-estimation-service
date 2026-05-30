@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from ensam3d_inference import FramePoseResult
 from ensam3d_inference.preprocessor.detector.types import RGBFrame
-from ensam3d_inference.examples.keypoints import SKELETON
+from ensam3d_inference.examples.keypoints import SKELETON, KEYPOINTS
 from .config import visualizer_config
 
 
@@ -70,7 +70,8 @@ def _draw_bbox_confidence(image: RGBFrame, bbox: np.ndarray, confidence: float) 
 
 def _draw_keypoints(image: RGBFrame, keypoints: np.ndarray, width: int, height: int) -> None:
     """
-    Render individual keypoint markers as filled circles.
+    Render individual keypoint markers as filled circles using per-keypoint
+    semantic colors defined in KEYPOINTS.
 
     Parameters
     ----------
@@ -83,6 +84,13 @@ def _draw_keypoints(image: RGBFrame, keypoints: np.ndarray, width: int, height: 
         Frame width for coordinate clipping.
     height : int
         Frame height for coordinate clipping.
+
+    Raises
+    ------
+    IndexError
+        If keypoints contains more entries than defined in KEYPOINTS.
+        This signals a desynchronization between the model output
+        topology and the upstream keypoint definition.
     """
     if keypoints.ndim != 2 or keypoints.shape[1] != 2:
         keypoints = keypoints.reshape(-1, 2)
@@ -97,7 +105,7 @@ def _draw_keypoints(image: RGBFrame, keypoints: np.ndarray, width: int, height: 
                 image,
                 (kp_x[i], kp_y[i]),
                 visualizer_config.keypoint_radius,
-                visualizer_config.keypoint_color,
+                KEYPOINTS[i].color,
                 -1,
             )
 
