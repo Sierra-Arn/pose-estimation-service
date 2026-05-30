@@ -108,7 +108,6 @@ if __name__ == "__main__":
 
     print("\n[info] waiting for infrastructure to start")
     time.sleep(10)
-    run(["just", "db-revision-auto"], allow_failure=True)
     run(["just", "db-migrate"])
 
     terminal(["just", "server"])
