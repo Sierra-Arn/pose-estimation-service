@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# app/api/modules/visualization/utils.py
+# app/server/modules/visualization/utils.py
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from ....shared.postgres import Visualization, VisualizationRepository

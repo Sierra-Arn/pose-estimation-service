@@ -30,7 +30,11 @@ class StorageOperations:
     """
 
     @staticmethod
-    async def upload_bytes(storage_key: str, data: bytes) -> None:
+    async def upload_bytes(
+        storage_key: str,
+        data: bytes,
+        content_type: str,
+    ) -> None:
         """
         Upload raw bytes to the bucket under the specified storage key.
 
@@ -40,6 +44,10 @@ class StorageOperations:
             Destination key for the object in the bucket.
         data : bytes
             Raw binary payload to upload.
+        content_type : str
+            MIME type to attach to the object metadata, defining how
+            downstream consumers and the storage console interpret
+            the uploaded payload.
 
         Raises
         ------
@@ -51,12 +59,18 @@ class StorageOperations:
                 Bucket=minio_config.user_bucket_name,
                 Key=storage_key,
                 Body=data,
+                ContentType=content_type,
             )
 
     @staticmethod
-    def upload_file_sync(storage_key: str, file_path: str) -> None:
+    def upload_file_sync(
+        storage_key: str,
+        file_path: str,
+        content_type: str,
+    ) -> None:
         """
-        Upload a local file to the bucket under the specified storage key using synchronous I/O.
+        Upload a local file to the bucket under the specified storage key
+        using synchronous I/O suitable for Celery worker contexts.
 
         Parameters
         ----------
@@ -64,6 +78,10 @@ class StorageOperations:
             Destination key for the object in the bucket.
         file_path : str
             Path to the local file to be uploaded.
+        content_type : str
+            MIME type to attach to the object metadata, defining how
+            downstream consumers and the storage console interpret
+            the uploaded payload.
 
         Raises
         ------
@@ -75,12 +93,14 @@ class StorageOperations:
             Filename=file_path,
             Bucket=minio_config.user_bucket_name,
             Key=storage_key,
+            ExtraArgs={"ContentType": content_type},
         )
 
     @staticmethod
-    async def download_bytes(storage_key: str) -> bytes:
+    async def download_bytes_with_type(storage_key: str) -> tuple[bytes, str]:
         """
-        Download the full content of an object from the bucket as raw bytes.
+        Download the full content of an object from the bucket as raw bytes
+        along with its MIME content type metadata.
 
         Parameters
         ----------
@@ -89,8 +109,12 @@ class StorageOperations:
 
         Returns
         -------
-        bytes
-            Raw binary payload of the requested object.
+        tuple of bytes and str
+            Two-element tuple where the first item is the raw binary payload
+            of the requested object and the second item is the MIME content
+            type stored in the object metadata (for example, video/mp4 or
+            application/json). Falls back to application/octet-stream when
+            the content type metadata is absent from the object.
 
         Raises
         ------
@@ -102,7 +126,9 @@ class StorageOperations:
                 Bucket=minio_config.user_bucket_name,
                 Key=storage_key,
             )
-            return await response["Body"].read()
+            body = await response["Body"].read()
+            content_type = response.get("ContentType")
+            return body, content_type
 
     @staticmethod
     def download_bytes_sync(storage_key: str) -> bytes:

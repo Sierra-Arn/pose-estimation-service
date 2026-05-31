@@ -27,16 +27,16 @@ class VideoMetadata(NamedTuple):
         Original frame width in pixels.
     height : int
         Original frame height in pixels.
-    duration_seconds : float or None
-        Total video duration in seconds, or None if unavailable.
-    fps : float or None
-        Average frame rate, or None if unparseable.
+    duration_seconds : float
+        Total video duration in seconds.
+    fps : float
+        Average frame rate.
     """
 
     width: int
     height: int
-    duration_seconds: float | None
-    fps: float | None
+    duration_seconds: float
+    fps: float
 
 
 class VideoIngestionValidationResponse(NamedTuple):
@@ -54,6 +54,8 @@ class VideoIngestionValidationResponse(NamedTuple):
     storage_key : str or None
         Deterministic object storage key derived from SHA-256 hash if unique.
         None otherwise.
+    content_type : str or None
+        MIME type detected via libmagic if unique. None otherwise.
     metadata : VideoMetadata or None
         Extracted technical metadata if unique. None otherwise.
     """
@@ -61,6 +63,7 @@ class VideoIngestionValidationResponse(NamedTuple):
     is_duplicate: bool
     video: Video | None
     storage_key: str | None
+    content_type: str | None
     metadata: VideoMetadata | None
 
 

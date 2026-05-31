@@ -28,7 +28,8 @@ from .....shared.minio import StorageOperations
     summary="Download video file by database ID",
     description="""
         Retrieves video metadata by ID, fetches the corresponding object 
-        from storage, and returns raw bytes.
+        from storage, and returns raw bytes with proper MIME type and
+        Content-Disposition headers for browser download.
     """
 )
 async def download_video_route(
@@ -48,7 +49,9 @@ async def download_video_route(
     Returns
     -------
     Response
-        Raw binary response with application octet-stream media type.
+        Binary response with the MIME content type from object storage
+        metadata and Content-Disposition header containing the original
+        filename for browser download prompts.
 
     Raises
     ------
@@ -58,5 +61,17 @@ async def download_video_route(
         file is missing despite a valid database record.
     """
     video = await get_video_or_404(session, video_id)
-    video_bytes = await StorageOperations.download_bytes(video.storage_key)
-    return Response(content=video_bytes, media_type="application/octet-stream")
+    
+    video_bytes, content_type = await StorageOperations.download_bytes_with_type(
+        video.storage_key
+    )
+    
+    filename = video.storage_key.split("/")[-1]
+    
+    return Response(
+        content=video_bytes,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

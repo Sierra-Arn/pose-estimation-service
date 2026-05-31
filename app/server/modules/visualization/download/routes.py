@@ -28,7 +28,8 @@ from .....shared.minio import StorageOperations
     summary="Download visualization video",
     description="""
         Retrieves visualization metadata by ID, fetches the corresponding video 
-        file from object storage, and returns raw bytes.
+        file from object storage, and returns raw bytes with proper MIME type
+        and Content-Disposition headers for browser download.
     """    
 )
 async def download_visualization_route(
@@ -48,7 +49,9 @@ async def download_visualization_route(
     Returns
     -------
     Response
-        Raw binary response with application octet-stream media type.
+        Binary response with the MIME content type from object storage
+        metadata and Content-Disposition header containing the original
+        filename for browser download prompts.
 
     Raises
     ------
@@ -58,5 +61,17 @@ async def download_visualization_route(
         500 Internal Server Error if object storage read fails.
     """
     visualization = await get_visualization_or_404(session, visualization_id)
-    video_bytes = await StorageOperations.download_bytes(visualization.storage_key)
-    return Response(content=video_bytes, media_type="application/octet-stream")
+    
+    video_bytes, content_type = await StorageOperations.download_bytes_with_type(
+        visualization.storage_key
+    )
+    
+    filename = visualization.storage_key.split("/")[-1]
+    
+    return Response(
+        content=video_bytes,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

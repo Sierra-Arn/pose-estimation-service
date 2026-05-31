@@ -28,8 +28,9 @@ def upload_pipeline_output_to_minio(
 
     Writes inference results to a local temporary file to avoid holding large
     tensor archives in memory, then streams the file to object storage using
-    the synchronous upload operation. The temporary file is guaranteed to be
-    removed after upload completion or failure.
+    the synchronous upload operation with the application/x-safetensors MIME
+    type explicitly attached to the object metadata. The temporary file is
+    guaranteed to be removed after upload completion or failure.
 
     Parameters
     ----------
@@ -49,11 +50,22 @@ def upload_pipeline_output_to_minio(
         If pipeline_output is empty or invalid for serialization.
     RuntimeError
         If safetensors serialization or the MinIO upload fails.
+
+    Notes
+    -----
+    The application/x-safetensors MIME type is hardcoded for this function
+    because the serialization pipeline is unconditionally configured for
+    the safetensors tensor format via save_pipeline_output. Callers needing
+    a different serialization format must use a separate uploader.
     """
     tmp_path: Path | None = None
     try:
         tmp_path = save_pipeline_output(pipeline_output)
-        StorageOperations.upload_file_sync(storage_key, str(tmp_path))
+        StorageOperations.upload_file_sync(
+            storage_key=storage_key,
+            file_path=str(tmp_path),
+            content_type="application/x-safetensors",
+        )
         return storage_key
     finally:
         if tmp_path is not None and tmp_path.exists():

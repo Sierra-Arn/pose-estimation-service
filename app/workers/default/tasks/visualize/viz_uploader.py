@@ -36,7 +36,8 @@ def encode_to_minio(
 
     Accepts a Python iterator yielding frames, pipes them directly to FFmpeg stdin,
     writes the encoded output to a temporary file, and performs a synchronous upload
-    to the configured bucket. The temporary file is automatically removed after
+    to the configured bucket with the video/mp4 MIME type explicitly attached to
+    the object metadata. The temporary file is automatically removed after
     successful upload or on any encoding failure.
 
     Parameters
@@ -75,7 +76,10 @@ def encode_to_minio(
     via memoryview to avoid redundant copies of raw pixel data. Broken pipe errors
     during frame ingestion are caught and re-raised with FFmpeg stderr output for
     diagnostics. stdout and stderr are consumed via communicate to prevent pipe
-    buffer deadlocks.
+    buffer deadlocks. The video/mp4 MIME type is hardcoded for this function
+    because the encoding pipeline is unconditionally configured for H.264 in
+    an MP4 container; callers needing a different container format must use
+    a separate uploader.
     """
     width = width - (width % 2)
     height = height - (height % 2)
@@ -127,7 +131,11 @@ def encode_to_minio(
         if not tmp_path.exists() or tmp_path.stat().st_size == 0:
             raise RuntimeError("FFmpeg produced an empty output file.")
 
-        StorageOperations.upload_file_sync(storage_key, str(tmp_path))
+        StorageOperations.upload_file_sync(
+            storage_key=storage_key,
+            file_path=str(tmp_path),
+            content_type="video/mp4",
+        )
 
     finally:
         if tmp_path.exists():

@@ -18,4 +18,5 @@ sam-3d-body-vith/
 
 # Test artifacts
 *.mp4
+*.MOV
 *.yaml

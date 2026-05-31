@@ -16,8 +16,7 @@
 import asyncio
 from fastapi import UploadFile, File, HTTPException, status, Depends, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from .domen import validate_upload_task
-from .types import SUPPORTED_INGESTION_CONTENT_TYPES, ALLOWED_INGESTION_CONTENT_TYPES_STR
+from .domen import validate_video_upload
 from ..router import video_router
 from ..schemas import VideoResponse
 from .....shared.postgres import get_async_db_session, Video
@@ -47,7 +46,7 @@ async def ingest_video_route(
     file : UploadFile
         Uploaded video file from the client request.
     description : str or None, optional
-        Optional textual description for the video asset. Defaults to None.
+        Optional textual description for the video asset. Default is None.
     session : AsyncSession
         Injected asynchronous database session for the current transaction.
 
@@ -56,22 +55,17 @@ async def ingest_video_route(
     VideoResponse
         Canonical representation of the ingested video asset. Contains the
         database identifier, object storage location, resolution, frame rate,
-        duration, and optional description. Returned for both newly created
-        records and duplicate content that matched an existing hash.
+        duration, MIME content type, and optional description. Returned for
+        both newly created records and duplicate content that matched an
+        existing hash.
 
     Raises
     ------
     HTTPException
-        400 Bad Request if the file format is unsupported, empty, or lacks
-        required metadata.
+        400 Bad Request if the file is empty, its detected MIME type is
+        unsupported, or required metadata cannot be extracted.
         500 Internal Server Error if object storage or database operations fail.
     """
-    if file.content_type not in SUPPORTED_INGESTION_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported content type. Allowed values: {ALLOWED_INGESTION_CONTENT_TYPES_STR}.",
-        )
-
     video_bytes = await file.read()
     if not video_bytes:
         raise HTTPException(
@@ -80,24 +74,27 @@ async def ingest_video_route(
         )
 
     try:
-        validation_result = await asyncio.to_thread(validate_upload_task, video_bytes)
-    except Exception as exc:
+        validation_result = await asyncio.to_thread(validate_video_upload, video_bytes)
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Validation and metadata extraction failed: {exc}",
+            detail=str(exc),
+        ) from exc
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to analyze uploaded file: {exc}",
         ) from exc
 
     if validation_result.is_duplicate:
         return VideoResponse.model_validate(validation_result.video)
 
-    if validation_result.metadata.duration_seconds is None or validation_result.metadata.fps is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not determine video duration or frame rate from metadata.",
-        )
-
     try:
-        await StorageOperations.upload_bytes(validation_result.storage_key, video_bytes)
+        await StorageOperations.upload_bytes(
+            storage_key=validation_result.storage_key,
+            data=video_bytes,
+            content_type=validation_result.content_type,
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

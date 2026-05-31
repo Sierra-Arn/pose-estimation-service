@@ -28,7 +28,9 @@ from ..utils import get_estimation_or_404
     summary="Download estimation file by database ID",
     description="""
         Retrieves estimation metadata by ID, fetches the corresponding
-        safetensors archive from object storage, and returns raw bytes.
+        safetensors archive from object storage, and returns raw bytes
+        with proper MIME type and Content-Disposition headers for
+        browser download.
     """,
 )
 async def download_estimation_route(
@@ -48,7 +50,9 @@ async def download_estimation_route(
     Returns
     -------
     Response
-        Raw binary response with generic octet-stream media type.
+        Binary response with the MIME content type from object storage
+        metadata and Content-Disposition header containing the original
+        filename for browser download prompts.
 
     Raises
     ------
@@ -58,5 +62,17 @@ async def download_estimation_route(
         500 Internal Server Error if object storage read fails.
     """
     estimation = await get_estimation_or_404(session, estimation_id)
-    estimation_bytes = await StorageOperations.download_bytes(estimation.storage_key)
-    return Response(content=estimation_bytes, media_type="application/octet-stream")
+    
+    estimation_bytes, content_type = await StorageOperations.download_bytes_with_type(
+        estimation.storage_key
+    )
+    
+    filename = estimation.storage_key.split("/")[-1]
+    
+    return Response(
+        content=estimation_bytes,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
