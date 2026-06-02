@@ -6,36 +6,24 @@
 
 ```bash
 pose-estimation-service/
-├── app/                        # Application source code, organized by runtime process.
-│   │                           # Each top-level subdirectory corresponds to an independently
-│   │                           # deployable process with its own entry point and dependencies.
-│   │
-│   ├── server/                 # FastAPI/Uvicorn HTTP server process.
-│   ├── workers/                # Celery worker processes and shared task infrastructure.
-│   └── shared/                 # Cross-process shared infrastructure.
+├── app/                        # Application source code, organized by deployment unit.
+│                               # Subdirectories correspond either to independently
+│                               # deployable processes with their own entry points, or to
+│                               # cross-process shared infrastructure.
 │
-├── docker/                     # Docker Compose definitions and infrastructure init scripts.
-│   │
-│   ├── compose.local.yml       # Infrastructure-only stack: starts MinIO, PostgreSQL, and Redis
-│   │                           # as Docker containers for locally running application processes.
-│   │
-│   ├── compose.deploy.yml      # Fully containerized stack: infrastructure, database migrations,
-│   │                           # API server, and both worker processes in a single Compose file.
-│   │
-│   ├── minio/init/             # MinIO initialization: application user and bucket creation; 
-│   │                           # scoped access policy assignment.
-│   ├── postgres/init/          # PostgreSQL initialization: application user and database creation
-│   │                           # with privilege grants.
-│   └── redis/init/             # Redis initialization: ACL-based user authentication configuration.
+├── docker/                     # Docker Compose stacks for local (infrastructure-only) and 
+│                               # deploy (fully containerized) modes.
 │
 ├── config/                     # Environment variable templates for local and deploy modes.
 │
 ├── migrations/                 # Alembic migration environment and database schema change scripts.
 │
-├── scripts/
-│   ├── infra/                  # Code-generation scripts for infrastructure init files.
-│   ├── quick_start/            # Automated startup scripts for local and deploy modes.
-│   └── utils/                  # Standalone utility scripts.
+├── scripts/                    # Standalone automation scripts for environment bootstrapping,
+│                               # infrastructure initialization, and operational workflows.
+│
+├── docs/                       # Technical documentation covering conceptual overview,
+│                               # domain model, runtime architecture, engineering decisions,
+│                               # API design, codebase layout, dependencies, and deployment.
 │
 ├── pixi.toml                   # Pixi environment configuration defining feature-based
 │                               # dependency groups for server, workers, and ML inference.
@@ -146,6 +134,10 @@ When you are done, shut down the running services depending on the active launch
     ```bash
     just docker-deploy-down
     ```
+
+## Want more details?
+
+For the full technical documentation — including conceptual design, domain modeling, runtime concurrency, API contracts, deployment guides, and more — see [the documentation](./docs/README.md).
 
 ## License
 
