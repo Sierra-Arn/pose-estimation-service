@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # docker/Dockerfile.worker-inference
-FROM ghcr.io/prefix-dev/pixi:0.69.0-noble AS worker-inference
+FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS worker-inference
 RUN pixi global install git --with git-lfs
 
 ENV CONDA_OVERRIDE_CUDA=12.8
@@ -21,8 +21,7 @@ ENV CONDA_OVERRIDE_CUDA=12.8
 WORKDIR /appdir
 
 COPY pixi.toml pixi.lock ./
+COPY packages/ ./packages/
 RUN pixi install -e worker-inference
 
-COPY app/ ./app/
-
-CMD ["pixi", "run", "-e", "worker-inference", "python", "-m", "app.workers.inference.main"]
+CMD ["pixi", "run", "-e", "worker-inference", "python", "-m", "worker_inference.main"]

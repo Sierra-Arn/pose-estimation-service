@@ -13,15 +13,14 @@
 # limitations under the License.
 
 # docker/Dockerfile.server
-FROM ghcr.io/prefix-dev/pixi:0.69.0-noble AS server
+FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS server
 RUN pixi global install curl
 
 WORKDIR /appdir
 
 COPY pixi.toml pixi.lock ./
+COPY packages/ ./packages/
+COPY migrations/ ./migrations/
 RUN pixi install -e server
 
-COPY app/ ./app/
-COPY migrations/ ./migrations/
-
-CMD ["pixi", "run", "-e", "server", "python", "-m", "app.server.main"]
+CMD ["pixi", "run", "-e", "server", "python", "-m", "server.main"]

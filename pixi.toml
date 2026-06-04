@@ -3,73 +3,115 @@ authors = ["Sierra Arn"]
 channels = ["nvidia", "conda-forge"]
 name = "pose-estimation-service"
 platforms = ["linux-64"]
-version = "0.4.0"
+version = "1.0.0"
+
+# =============================================================================
 
 [dependencies]
 python = "*"
 python-dotenv = "*"
+requests = "*"
 just = "*"
 
-[feature.common.dependencies]
+[pypi-dependencies]
+scripts = { path = "./packages/scripts/", editable = true }
+
+# =============================================================================
+
+[feature.shared-pkg.dependencies]
 python = "*"
 pydantic-settings = "*"
 
-[feature.s3.dependencies]
 boto3 = "*"
 aioboto3 = "*"
 safetensors = "*"
 av = "*"
 ffmpeg = "*"
 
-[feature.db.dependencies]
 sqlalchemy = "*"
 alembic = "*"
 psycopg2-binary = "*"
 asyncpg = "*"
 
-[feature.tasks.dependencies]
 redis-py = "*"
 celery = "*"
 
-[feature.api.dependencies]
+[feature.shared-pkg.pypi-dependencies]
+shared = { path = "./packages/shared/", editable = true }
+
+# =============================================================================
+
+[feature.server-pkg.dependencies]
 fastapi = "*"
 uvicorn = "*"
 python-json-logger = "*"
 filetype = "*"
 
-[feature.ml-common.dependencies]
+[feature.server-pkg.pypi-dependencies]
+server = { path = "./packages/server/", editable = true }
+
+# =============================================================================
+
+[feature.worker-common-pkg.dependencies]
 jaxtyping = "*"
 opencv = "*"
 torchvision = "*"
 ultralytics = "*"
 timm = "*"
 
-[feature.ml-common.pypi-dependencies]
+[feature.worker-common-pkg.pypi-dependencies]
 roma = "*"
 ensam3d-lib = { git = "https://github.com/Sierra-Arn/ensam3d-lib.git" }
 
-[feature.ml-inference.system-requirements]
+# =============================================================================
+
+[feature.worker-inference-pkg.system-requirements]
 cuda = "12.8"
 
-[feature.ml-inference.dependencies]
+[feature.worker-inference-pkg.dependencies]
 cuda-toolkit = ">=12.8.0,<12.9"
 pytorch-gpu = "*"
 
-[feature.ml-default.dependencies]
+[feature.worker-inference-pkg.pypi-dependencies]
+worker-inference = { path = "./packages/worker-inference/", editable = true }
+
+# =============================================================================
+
+[feature.worker-default-pkg.dependencies]
 pytorch-cpu = "*"
 
+[feature.worker-default-pkg.pypi-dependencies]
+worker-default = { path = "./packages/worker-default/", editable = true }
+
+# =============================================================================
+
+# NOTE: This is a deliberate duplication of worker-default-pkg for the "full" 
+# environment. We cannot simply include worker-default-pkg directly because it 
+# depends on pytorch-cpu, while worker-inference-pkg (also in "full") requires 
+# pytorch-gpu. Mixing CPU and GPU PyTorch builds in a single environment may  
+# cause unpredictable installation behavior.
+
+[feature.worker-default-pkg-pkg.pypi-dependencies]
+worker-default = { path = "./packages/worker-default/", editable = true }
+
+# =============================================================================
+
+[feature.benchmarks-pkg.pypi-dependencies]
+benchmarks = { path = "./packages/benchmarks/", editable = true }
+
+# =============================================================================
+
 [environments.full]
-features = ["common", "s3", "db", "tasks", "api", "ml-common", "ml-inference"]
-no-default-feature = true
+features = ["shared-pkg", "server-pkg", "worker-common-pkg", "worker-inference-pkg", "worker-default-pkg-pkg", "benchmarks-pkg"]
 
 [environments.server]
-features = ["common", "s3", "db", "tasks", "api"]
+features = ["shared-pkg", "server-pkg"]
 no-default-feature = true
 
 [environments.worker-inference]
-features = ["common", "s3", "db", "tasks", "ml-common", "ml-inference"]
+features = ["shared-pkg", "worker-common-pkg", "worker-inference-pkg"]
 no-default-feature = true
 
 [environments.worker-default]
-features = ["common", "s3", "db", "tasks", "ml-common", "ml-default"]
+features = ["shared-pkg", "worker-common-pkg", "worker-default-pkg"]
 no-default-feature = true

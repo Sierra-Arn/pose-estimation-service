@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shared"
+version = "1.0.0"
+readme = "README.md"
+license = {file = "LICENSE"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+    "base_lib*",
+    "minio_lib*",
+    "postgres_lib*",
+    "redis_lib*"
+]

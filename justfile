@@ -22,8 +22,8 @@ set export := true
 # Environment Mappings: justfile variable -> pixi environment
 # =============================================================================
 
-ENV_DEFAULT     := "pixi run -e default"        
-ENV_SERVER      := "pixi run -e server"         
+ENV_DEFAULT     := "pixi run -e default"
+ENV_SERVER      := "pixi run -e server"
 ENV_WORKER_INF  := "pixi run -e worker-inference"
 ENV_WORKER_DEF  := "pixi run -e worker-default"
 
@@ -33,23 +33,19 @@ ENV_WORKER_DEF  := "pixi run -e worker-default"
 
 # Generate .env from template with secure random passwords
 gen-env template='local':
-    {{ENV_DEFAULT}} python scripts/infra/init_env.py --template {{template}}
+    {{ENV_DEFAULT}} python -m scripts.utils.init_env --template {{template}}
 
 # Generate Redis ACL rules for Docker init
 gen-acl:
-    {{ENV_DEFAULT}} python scripts/infra/generate_redis_acl.py
+    {{ENV_DEFAULT}} python -m scripts.utils.generate_redis_acl
 
 # Generate PostgreSQL user creation script for Docker init
 gen-sql:
-    {{ENV_DEFAULT}} python scripts/infra/generate_postgres_sql.py
+    {{ENV_DEFAULT}} python -m scripts.utils.generate_postgres_sql
 
 # Generate MinIO policy and init script for Docker init container
 gen-minio:
-    {{ENV_DEFAULT}} python scripts/infra/generate_minio_setup.py
-
-# Export OpenAPI specification to local file
-export-swagger:
-    {{ENV_SERVER}} python scripts/utils/export_swagger.py
+    {{ENV_DEFAULT}} python -m scripts.utils.generate_minio_setup
 
 # =============================================================================
 # Infrastructure
@@ -77,15 +73,15 @@ db-rollback:
 
 # Start Celery worker for ML inference
 worker-inference:
-    {{ENV_WORKER_INF}} python -m app.workers.inference.main
+    {{ENV_WORKER_INF}} python -m worker_inference.main
 
 # Start Celery worker for general-purpose background tasks
 worker-default:
-    {{ENV_WORKER_DEF}} python -m app.workers.default.main
+    {{ENV_WORKER_DEF}} python -m worker_default.main
 
 # Launch FastAPI server
 server:
-    {{ENV_SERVER}} python -m app.server.main
+    {{ENV_SERVER}} python -m server.main
 
 # =============================================================================
 # Docker Local
@@ -125,8 +121,8 @@ docker-deploy-logs:
 
 # Start full local development environment and open Swagger in browser
 quick-start-local:
-    {{ENV_DEFAULT}} python scripts/quick_start/local.py
+    {{ENV_DEFAULT}} python -m scripts.quick_start.local
 
 # Start full containerized deployment and open Swagger in browser
 quick-start-deploy:
-    {{ENV_DEFAULT}} python scripts/quick_start/deploy.py
+    {{ENV_DEFAULT}} python -m scripts.quick_start.deploy

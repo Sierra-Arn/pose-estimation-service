@@ -13,14 +13,13 @@
 # limitations under the License.
 
 # docker/Dockerfile.worker-default
-FROM ghcr.io/prefix-dev/pixi:0.69.0-noble AS worker-default
+FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS worker-default
 RUN pixi global install git --with git-lfs
 
 WORKDIR /appdir
 
 COPY pixi.toml pixi.lock ./
+COPY packages/ ./packages/
 RUN pixi install -e worker-default
 
-COPY app/ ./app/
-
-CMD ["pixi", "run", "-e", "worker-default", "python", "-m", "app.workers.default.main"]
+CMD ["pixi", "run", "-e", "worker-default", "python", "-m", "worker_default.main"]

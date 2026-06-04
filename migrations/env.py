@@ -14,8 +14,6 @@
 
 # migrations/env.py
 import os
-from pathlib import Path
-import sys
 from logging.config import fileConfig
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
@@ -24,14 +22,9 @@ from alembic import context
 
 load_dotenv()
 
-# Add the parent directory to sys.path to allow imports from the project
-# This is crucial for Alembic to find the application modules
-project_root = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(project_root))
-
 # Import models and configuration
 # These imports are essential for Alembic to detect the models and generate migrations
-from app.shared.postgres import Base, Video, Estimation, Visualization
+from postgres_lib import Base, Video, Estimation, Visualization
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
