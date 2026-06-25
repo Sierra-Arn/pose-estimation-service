@@ -22,7 +22,7 @@ from .config import postgres_config
 
 
 sync_engine = create_engine(
-    postgres_config.sync_database_url,
+    postgres_config.database_url,
     echo=postgres_config._echo,
     future=True
 )
@@ -57,7 +57,7 @@ def get_sync_db_session() -> Generator[Session, None, None]:
 
 
 async_engine = create_async_engine(
-    postgres_config.async_database_url,
+    postgres_config.database_url,
     echo=postgres_config._echo,
     future=True
 )

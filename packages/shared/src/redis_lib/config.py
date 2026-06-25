@@ -40,8 +40,11 @@ class RedisConfig(BaseConfig):
     user_password : str
         Password for Redis authentication; treated as sensitive data.
     connection_url : str
-        Read-only property assembling the full Redis connection URI with
-        credentials.
+        Read-only property assembling the full Redis connection URI from the
+        configured endpoint and credentials. The URI is client-agnostic: the
+        same string initialises both synchronous and asynchronous redis-py
+        clients, since the mode is selected by the client constructor
+        (Redis.from_url vs redis.asyncio.Redis.from_url), not by the URL.
     """
 
     env_prefix: ClassVar[str] = "REDIS_"

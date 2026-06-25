@@ -65,6 +65,12 @@ class PostgresConfig(BaseConfig):
         Read-only property assembling the asynchronous PostgreSQL connection
         URI with asyncpg driver; used by the application runtime for
         non-blocking database operations.
+    database_url : str
+        Read-only property assembling the PostgreSQL connection URI with the
+        psycopg (version 3) driver. The URL is mode-agnostic — the psycopg dialect
+        backs both synchronous and asynchronous engines — so the engine constructor
+        that consumes it (create_engine vs create_async_engine), not the URL,
+        selects the mode.
     """
 
     env_prefix: ClassVar[str] = "POSTGRES_"
@@ -83,34 +89,23 @@ class PostgresConfig(BaseConfig):
     _expire_on_commit: Final[bool] = False
 
     @property
-    def sync_database_url(self) -> str:
+    def database_url(self) -> str:
         """
-        Build synchronous PostgreSQL database connection URL from configuration settings.
+        Build the PostgreSQL connection URL from configuration settings.
+
+        Uses the psycopg (version 3) driver, whose SQLAlchemy dialect
+        serves both synchronous and asynchronous engines. Whether a connection 
+        is sync or async is determined by the engine constructor used, not by the URL, 
+        so a single URL is shared by Alembic migrations and the application runtime alike.
 
         Returns
         -------
         str
             Complete PostgreSQL connection URI in the format
-            postgresql+psycopg2://username:password@host:port/db_name
+            postgresql+psycopg://username:password@host:port/db_name
         """
         return (
-            f"postgresql+psycopg2://{self.user_name}:{quote_plus(self.user_password)}"
-            f"@{self.host}:{self.port}/{self.user_db_name}"
-        )
-    
-    @property
-    def async_database_url(self) -> str:
-        """
-        Build asynchronous PostgreSQL database connection URL from configuration settings.
-
-        Returns
-        -------
-        str
-            Complete PostgreSQL connection URI in the format
-            postgresql+asyncpg://username:password@host:port/db_name
-        """
-        return (
-            f"postgresql+asyncpg://{self.user_name}:{quote_plus(self.user_password)}"
+            f"postgresql+psycopg://{self.user_name}:{quote_plus(self.user_password)}"
             f"@{self.host}:{self.port}/{self.user_db_name}"
         )
 

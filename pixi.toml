@@ -3,15 +3,15 @@ authors = ["Sierra Arn"]
 channels = ["nvidia", "conda-forge"]
 name = "pose-estimation-service"
 platforms = ["linux-64"]
-version = "1.0.0"
+version = "1.0.1"
 
 # =============================================================================
 
 [dependencies]
-python = "*"
-python-dotenv = "*"
-requests = "*"
-just = "*"
+python = ">=3.12.13,<3.15"
+python-dotenv = ">=1.2.2,<2"
+requests = ">=2.34.2,<3"
+just = ">=1.51.0,<2"
 
 [pypi-dependencies]
 scripts = { path = "./packages/scripts/", editable = true }
@@ -19,22 +19,21 @@ scripts = { path = "./packages/scripts/", editable = true }
 # =============================================================================
 
 [feature.shared-pkg.dependencies]
-python = "*"
-pydantic-settings = "*"
+python = ">=3.12.13,<3.15"
+pydantic-settings = ">=2.14.2,<3"
 
-boto3 = "*"
-aioboto3 = "*"
-safetensors = "*"
-av = "*"
-ffmpeg = "*"
+boto3 = ">=1.40.61,<2"
+aioboto3 = ">=15.5.0,<16"
+safetensors = ">=0.8.0,<0.9"
+av = ">=14.2.0,<18"
+ffmpeg = ">=7.1.0,<9"
 
-sqlalchemy = "*"
-alembic = "*"
-psycopg2-binary = "*"
-asyncpg = "*"
+sqlalchemy = ">=2.0.51,<3"
+alembic = ">=1.18.4,<2"
+psycopg-c = ">=3.2.10,<4"
 
-redis-py = "*"
-celery = "*"
+redis-py = ">=8.0.1,<9"
+celery = ">=5.5.3,<6"
 
 [feature.shared-pkg.pypi-dependencies]
 shared = { path = "./packages/shared/", editable = true }
@@ -42,10 +41,10 @@ shared = { path = "./packages/shared/", editable = true }
 # =============================================================================
 
 [feature.server-pkg.dependencies]
-fastapi = "*"
-uvicorn = "*"
-python-json-logger = "*"
-filetype = "*"
+fastapi = ">=0.138.0,<0.139"
+uvicorn = ">=0.49.0,<0.50"
+python-json-logger = ">=4.1.0,<5"
+filetype = ">=1.2.0,<2"
 
 [feature.server-pkg.pypi-dependencies]
 server = { path = "./packages/server/", editable = true }
@@ -53,14 +52,15 @@ server = { path = "./packages/server/", editable = true }
 # =============================================================================
 
 [feature.worker-common-pkg.dependencies]
-jaxtyping = "*"
-opencv = "*"
-torchvision = "*"
-ultralytics = "*"
-timm = "*"
+numpy = ">=1.26.4,<2"
+torchvision = ">=0.20.1,<0.21"
+ultralytics = ">=8.4.46,<9"
+timm = ">=1.0.26,<2"
+opencv = ">=4.10.0,<5"
+jaxtyping = ">=0.3.7,<0.4"
 
 [feature.worker-common-pkg.pypi-dependencies]
-roma = "*"
+roma = ">=1.5.6, <2"
 ensam3d-lib = { git = "https://github.com/Sierra-Arn/ensam3d-lib.git" }
 
 # =============================================================================
@@ -69,8 +69,8 @@ ensam3d-lib = { git = "https://github.com/Sierra-Arn/ensam3d-lib.git" }
 cuda = "12.8"
 
 [feature.worker-inference-pkg.dependencies]
-cuda-toolkit = ">=12.8.0,<12.9"
-pytorch-gpu = "*"
+cuda-toolkit = ">=12.8.2,<13"
+pytorch-gpu = ">=2.5.1,<3"
 
 [feature.worker-inference-pkg.pypi-dependencies]
 worker-inference = { path = "./packages/worker-inference/", editable = true }
@@ -78,7 +78,7 @@ worker-inference = { path = "./packages/worker-inference/", editable = true }
 # =============================================================================
 
 [feature.worker-default-pkg.dependencies]
-pytorch-cpu = "*"
+pytorch-cpu = ">=2.5.1,<3"
 
 [feature.worker-default-pkg.pypi-dependencies]
 worker-default = { path = "./packages/worker-default/", editable = true }
