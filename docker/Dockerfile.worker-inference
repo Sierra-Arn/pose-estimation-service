@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # docker/Dockerfile.worker-inference
-FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS worker-inference
+FROM ghcr.io/prefix-dev/pixi:0.71.1-noble AS worker-inference
 RUN pixi global install git --with git-lfs
 
 ENV CONDA_OVERRIDE_CUDA=12.8

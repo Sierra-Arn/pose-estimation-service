@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # docker/Dockerfile.server
-FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS server
+FROM ghcr.io/prefix-dev/pixi:0.71.1-noble AS server
 RUN pixi global install curl
 
 WORKDIR /appdir

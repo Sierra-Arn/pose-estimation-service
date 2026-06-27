@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # docker/Dockerfile.worker-default
-FROM ghcr.io/prefix-dev/pixi:0.70.0-noble AS worker-default
+FROM ghcr.io/prefix-dev/pixi:0.71.1-noble AS worker-default
 RUN pixi global install git --with git-lfs
 
 WORKDIR /appdir
