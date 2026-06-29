@@ -1,127 +1,97 @@
-# **Human Pose Estimation Service**  
+# Human Pose Estimation Service
 
 > *Production-oriented REST API service exposing [`ensam3d_inference`](https://github.com/Sierra-Arn/ensam3d-lib/tree/main/docs/ensam3d_inference) as a managed backend for distributed 3D human pose estimation, with video ingestion, GPU worker orchestration, annotated visualization rendering, and persistent artifact storage.*
 
 ## Performance Benchmark
 
-This benchmark demonstrates the full processing pipeline of the system running in parallel across multiple videos. Each video independently goes through three stages: 
-1. *ingestion* (upload + validation), 
-2. *pose estimation* (GPU inference), 
-3. *visualization rendering* (video overlay generation).
+End-to-end performance under concurrent load is summarized below using a parallel-pipeline benchmark — ten videos of mixed resolution and size submitted simultaneously, each running independently through ingestion, estimation, and visualization.
 
-The key metric is the Parallelism Ratio — the ratio between the sum of all individual stage latencies and the actual wall-clock time. In this benchmark, a ratio of 6.36x demonstrates that the distributed architecture completed the entire workload 6.36 times faster than a single sequential pipeline would have.
-
-### Benchmark Videos
-
-All videos were sourced from [Pexels](https://www.pexels.com/) and processed simultaneously:
-
-| # | Video | Resolution | Duration | Size |
-|---|-------|------------|----------|------|
-| 1 | [Person jogging at the beach](https://www.pexels.com/video/person-jogging-at-the-beach-4928018/) | 1920 × 1080 | 8.93 sec | 5.69 MB |
-| 2 | [Man with prosthetic leg jogging](https://www.pexels.com/video/man-with-prosthetic-leg-jogging-8344814/) | 3840 × 2160 | 24.32 sec | 72.10 MB |
-| 3 | [A man running on the beach shore](https://www.pexels.com/video/a-man-running-on-the-beach-shore-3125907/) | 3840 × 2160 | 12.60 sec | 28.55 MB |
-| 4 | [A man jogging by the lakeside](https://www.pexels.com/video/a-man-jogging-by-the-lakeside-3209300/) | 3840 × 2160 | 15.36 sec | 22.63 MB |
-| 5 | [A man running at the beach](https://www.pexels.com/video/a-man-running-at-the-beach-9184994/) | 3840 × 2160 | 26.10 sec | 77.51 MB |
-| 6 | [A woman running in the beach](https://www.pexels.com/video/a-woman-running-in-the-beach-3191808/) | 3840 × 2160 | 16.48 sec | 48.59 MB |
-| 7 | [A person running on the beach at sunset](https://www.pexels.com/video/a-person-running-on-the-beach-at-sunset-4443743/) | 1920 × 1080 | 12.96 sec | 7.74 MB |
-| 8 | [Woman jogging by the seashore](https://www.pexels.com/video/woman-jogging-by-the-seashore-3192083/) | 3840 × 2160 | 14.84 sec | 41.02 MB |
-| 9 | [A man running on the beach](https://www.pexels.com/video/a-man-running-on-the-beach-5968011/) | 1280 × 720 | 9.97 sec | 3.27 MB |
-| 10 | [Man jogging outdoors](https://www.pexels.com/video/man-jogging-outdoors-6022795/) | 3840 × 2160 | 15.64 sec | 46.78 MB |
-
-### Configuration
-
-**Environment**
+**Configuration**
 
 | | |
-|-----------------------------|-------------------------------------------------------------|
-| CPU                         | AMD Ryzen 7 5800H with Radeon Graphics                      |
-| GPU                         | NVIDIA GeForce RTX 3070 Laptop GPU                          |
-| PyTorch Version             | 2.5.1.post306                                               |
-| CUDA Version                | 12.6                                                        |
-| Number of Servers           | 1                                                           |
-| Number of Default Workers   | 1 (prefork pool, CPU, concurrency 4, prefetch_multiplier 1) |
-| Number of Inference Workers | 2 (solo pool, CUDA, concurrency 1, prefetch_multiplier 1)   |
+|------------------------------|-------------------------------------------------------------|
+| Workload                     | 10 videos submitted simultaneously                          |
+| Video Resolutions            | 720p – 4K                                                   |
+| Video Sizes                  | 3.27 MB – 77.51 MB                                          |
+| CPU                          | AMD Ryzen 7 5800H with Radeon Graphics                      |
+| GPU                          | NVIDIA GeForce RTX 3070 Laptop GPU                          |
+| PyTorch Version              | 2.5.1.post306                                               |
+| CUDA Version                 | 12.6                                                        |
+| Inference Workers            | 2 (solo pool, CUDA, concurrency 1)                          |
+| Post-processing Workers      | 1 (prefork pool, CPU, concurrency 4)                        |
 
-**Estimation Parameters**
-
-| | |
-|-------------------------|-------------|
-| Target Resolution       | 1920 × 1080 |
-| Target Duration         | 10.00 sec   |
-| Target FPS              | 20.00       |
-| Target Frames per Video | 200         |
-| Inference Batch Size    | 30          |
-
-**Visualization Parameters**
+**Results**
 
 | | |
-|--------------------------|--------|
-| Show Keypoints           | True   |
-| Show Skeleton            | True   |
-| Show Bounding Boxes      | False  |
-| CRF (Quality)            | 20     |
-| Encoding Preset          | medium |
-| Visualization Batch Size | 30     |
-
-### Performance
-
-| | |
-|------------------------|------------|
-| Total Videos Processed | 10         |
-| Wall-Clock Time        | 135.68 sec |
-| Summed Stage Times     | 863.15 sec |
-| Parallelism Ratio      | 6.36x      |
+|----------------------------|------------|
+| Total Videos Processed     | 10         |
+| Wall-Clock Time            | 135.68 sec |
+| Summed Stage Times         | 863.15 sec |
+| Parallelism Ratio          | 6.36x      |
 
 > **Want more details?**  
-> For the full technical documentation — including conceptual design, domain modeling, runtime concurrency, API contracts, deployment guides, and more — see [the documentation](./docs/README.md).
+> For the full technical documentation — including conceptual design, requirements, runtime concurrency, the domain model, per-endpoint request lifecycles, the dependency stack, project structure, and performance benchmarks — see [the documentation](./docs/README.md).
 
 ## Project Structure
 
 ```bash
 pose-estimation-service/
-├── packages/                     # Monorepo root containing all independently deployable Python modules and
-│   │                             # shared libraries. Each package strictly follows the standard `src/` layout
-│   │                             # (e.g., `packages/server/src/server/`) for clean imports and packaging.
+├── packages/               # Monorepo root: all independently deployable
+│   │                       # Python modules and shared libraries. Each
+│   │                       # package uses the standard `src/` layout
+│   │                       # (e.g. `packages/server/src/server/`).
 │   │
-│   ├── server/                   # FastAPI application handling HTTP routing, request validation,
-│   │                             # database interactions, and decoupled task delegation to workers.
+│   ├── server/             # FastAPI app: HTTP routing, request
+│   │                       # validation, database interactions, and
+│   │                       # task delegation to the workers.
 │   │
-│   ├── worker-inference/         # Dedicated GPU worker process executing heavy ML inference
-│   │                             # via the `ensam3d_inference` engine.
+│   ├── worker-inference/   # Dedicated GPU worker running heavy ML
+│   │                       # inference via the `ensam3d_inference` engine.
 │   │
-│   ├── worker-default/           # General-purpose CPU worker process executing background post-processing pipelines
-│   │                             # (currently: rendering annotated video overlays and persisting media assets to S3).
+│   ├── worker-default/     # General-purpose CPU worker running background
+│   │                       # post-processing pipelines (currently:
+│   │                       # rendering annotated video overlays and
+│   │                       # persisting media assets to S3).
 │   │
-│   ├── shared/                   # Cross-process shared infrastructure. Contains base configurations,
-│   │                             # unified client abstractions for external services
-│   │                             # (e.g., PostgreSQL, Redis, MinIO/S3), and more.
+│   ├── shared/             # Cross-process shared infrastructure: base
+│   │                       # configs and unified client abstractions for
+│   │                       # external services (PostgreSQL, Redis,
+│   │                       # MinIO/S3), and more.
 │   │
-│   ├── scripts/                  # Standalone automation scripts for environment bootstrapping,
-│   │                             # infrastructure initialization, and auxiliary utility tasks 
-│   │                             # (e.g., OpenAPI schema export).
+│   ├── scripts/            # Standalone automation scripts: environment
+│   │                       # bootstrapping, infrastructure init, and
+│   │                       # auxiliary tasks (e.g. OpenAPI schema export).
 │   │
-│   └── benchmarks/               # Performance testing suite for measuring endpoint latency,
-│                                 # pipeline throughput, and parallel processing efficiency.
+│   └── benchmarks/         # Performance testing suite: endpoint latency,
+│                           # pipeline throughput, and parallel
+│                           # processing efficiency.
 │
-├── docker/                       # Docker Compose stacks for local (infrastructure-only) and 
-│                                 # deploy (fully containerized) modes.
+├── docker/                 # Docker Compose stacks for local
+│                           # (infrastructure-only) and deploy
+│                           # (fully containerized) modes.
 │
-├── config/                       # Environment variable templates for local and deploy modes.
+├── config/                 # Environment variable templates for local
+│                           # and deploy modes.
 │
-├── migrations/                   # Alembic migration environment and database schema change scripts.
+├── migrations/             # Alembic migration environment and database
+│                           # schema change scripts.
 │
-├── docs/                         # Technical documentation covering conceptual overview,
-│                                 # domain model, runtime architecture, engineering decisions,
-│                                 # API design, codebase layout, and dependencies.
+├── docs/                   # Technical documentation: conceptual overview,
+│                           # domain model, runtime architecture,
+│                           # engineering decisions, API design, codebase
+│                           # layout, and dependencies.
 │
-├── pixi.toml                     # Pixi environment configuration defining feature-based
-│                                 # dependency groups for server, workers, and ML inference.
+├── pixi.toml               # Pixi configuration defining feature-based
+│                           # dependency groups for server, workers, and
+│                           # ML inference.
 │
-├── pixi.lock                     # Fully resolved and reproducible dependency lockfile.
+├── pixi.lock               # Fully resolved, reproducible dependency
+│                           # lockfile.
 │
-└── justfile                      # Task runner: bootstrap commands, database migration targets,
-                                  # runtime process launchers, and Docker Compose shortcuts.
-                                  # Automatically manages pixi environment context per recipe.
+└── justfile                # Task runner: bootstrap commands, database
+                            # migration targets, runtime process launchers,
+                            # and Docker Compose shortcuts. Automatically
+                            # manages the pixi environment per recipe.
 ```
 
 ## Quick Start
@@ -131,10 +101,16 @@ pose-estimation-service/
 - [Pixi](https://pixi.sh/latest/) package manager.
 - [Docker and Docker Compose](https://docs.docker.com/engine/install/).
 - GNU/Linux-based system on `x86_64` architecture.
-- NVIDIA GPU with driver compatible with CUDA Toolkit `>= 12.8`.
+- NVIDIA GPU with a driver that supports CUDA `>= 12.8`.
 
-> **Note:**  
-> These prerequisites are not strict requirements but describe the environment used for development. The service can be set up in alternative environments with different package managers, operating systems, or GPU configurations if needed.
+> **Note: on these prerequisites**  
+> These are not strict requirements but describe the environment used for development. The package can be set up in alternative environments with different package managers, operating systems, or GPU configurations if needed.
+
+> **Note: on CUDA versions**  
+> The `>= 12.8` figure is a *driver* requirement, enforced through pixi's `system-requirements`. It was chosen because 12.8 was the default CUDA build shipped by PyTorch at the time development started (a plain `pip install torch` pulled the 12.8 build back then).
+
+> **Note: the benchmarking and profiling scripts report**  
+> `CUDA Version: 12.6`. This is expected and not a mismatch: that value comes from `torch.version.cuda`, i.e. the CUDA version the PyTorch binary was *compiled against*, which is independent of the newer CUDA toolkit resolved into the environment. CUDA minor-version compatibility lets a 12.6 build run on any 12.x driver with the same major version.
 
 ### II. Setup
 
@@ -159,28 +135,19 @@ pose-estimation-service/
 
 ### III. Model Weights Access
 
-The service requires the `sam-3d-body-vith` model weights, which are hosted on Hugging Face under restricted access.
+To perform pose estimation, the service requires the `sam-3d-body-vith` model weights, which are hosted on Hugging Face under restricted access. To obtain them:
 
-1. **Request access**
-
-    Navigate to the model repository and submit an access request:
-
-    ```
-    https://huggingface.co/facebook/sam-3d-body-vith
-    ```
-
-2. **Download weights**
-
-    After access is granted, download the weights manually and place them in the project root:
+1. Navigate to the [facebook/sam-3d-body-vith](https://huggingface.co/facebook/sam-3d-body-vith) repository.
+2. Sign in with a Hugging Face account, request access to the repository, and wait for approval.
+3. Once access is granted, download the weights manually and place the downloaded `sam-3d-body-vith/` directory in the project root.
 
     ```bash
     # Expected structure after download:
     pose-estimation-service/
-    ├── app/
+    ├── packages/ 
     ├── docker/
     ├── config/
     ├── migrations/
-    ├── scripts/
     ├── pixi.toml
     ├── pixi.lock
     ├── justfile

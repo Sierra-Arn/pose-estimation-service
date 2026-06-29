@@ -1,8 +1,10 @@
-# VIII. **Performance Benchmarks**
+# VII. Performance Benchmarks
+
+> *This document presents empirical performance benchmarks for the Human Pose Estimation Service, measuring ingestion latency, GPU inference throughput, and end-to-end parallel pipeline efficiency — validating the deduplication, asynchronous execution, and independent worker scaling decisions made in the preceding documents.*
 
 ## Ingestion Latency & Deduplication
 
-This benchmark measures the performance of the video ingestion endpoint and validates the content-addressed deduplication mechanism. Each file is uploaded twice to the `/videos/ingest/` endpoint:
+[This benchmark](../packages/benchmarks/src/benchmarks/ingestion_latency.py) measures the performance of the video ingestion endpoint and validates the content-addressed deduplication mechanism. Each file is uploaded twice to the `/videos/ingest/` endpoint:
 
 1. **First request**: Full validation pipeline — MIME type detection, SHA-256 hashing, MinIO upload, and database registration.
 2. **Second request**: Deduplication check — if the file hash already exists in the database, the system bypasses heavy I/O operations and returns the existing record instantly.
@@ -63,13 +65,15 @@ All video files were sourced from [Pexels](https://www.pexels.com/). Non-video f
 
 **Key Observations**
 
-- **Deduplication effectiveness**: Video files show 2.77x–7.90x speedup on second upload, confirming that SHA-256 hash matching bypasses MinIO I/O and database writes.
-- **File size correlation**: Larger files (72 MB vs 5.69 MB) show proportionally longer ingest times but similar deduplication performance, indicating that hash lookup is O(1) regardless of payload size.
-- **Content validation**: Non-video files are correctly rejected at the API boundary with appropriate HTTP status codes (400 for known MIME types, 500 for undetectable signatures).
+| Observation | Detail |
+|-------------|--------|
+| **Deduplication effectiveness** | Video files show a 2.77x–7.90x speedup on the second upload, confirming that content-hash matching bypasses MinIO I/O and database writes. |
+| **File-size correlation** | Larger files (72 MB vs 5.69 MB) take proportionally longer to ingest but deduplicate at similar speed, indicating that hash lookup runs in constant time regardless of payload size. |
+| **Content validation** | Non-video files are rejected at the API boundary: a recognized non-video signature yields `400` (wrong type), while a file with no detectable signature at all — such as `.env` — yields `500`, since validation is signature-based and a file without one cannot be identified. |
 
 ## Estimation Latency & GPU Inference Deduplication
 
-This benchmark measures the performance of the pose estimation endpoint and validates the result caching mechanism. Each video is submitted twice to the `/estimations/submit/` endpoint with identical processing parameters:
+[This benchmark](../packages/benchmarks/src/benchmarks/estimation_latency.py) measures the performance of the pose estimation endpoint and validates the result caching mechanism. Each video is submitted twice to the `/estimations/submit/` endpoint with identical processing parameters:
 
 1. **First request**: Full GPU inference pipeline — video decoding, frame extraction, 3D human pose estimation via SAM 3D Body model, and result persistence.
 2. **Second request**: Result cache lookup — if the same video with identical processing parameters has already been estimated, the system bypasses GPU computation and returns the cached result instantly.
@@ -127,15 +131,16 @@ All videos were sourced from [Pexels](https://www.pexels.com/) and processed wit
 
 **Key Observations**
 
-- **Massive deduplication speedup**: GPU inference results show 11x–27x speedup on cache hits, significantly higher than ingestion deduplication (2.77x–7.90x). This confirms that parameter-aware caching effectively eliminates expensive GPU computation.
-- **Stable cache lookup time**: Second requests consistently complete in ~1,006 ms regardless of video size or frame count, indicating O(1) cache lookup performance.
-- **Real-time processing ratio**: Both videos process at approximately real-time speed (20 sec video → 27 sec processing, 8 sec video → 11 sec processing), demonstrating efficient GPU utilization.
-- **Consistent throughput**: Despite different resolutions and durations, both videos achieve similar throughput (~14.5 FPS), showing that the inference pipeline scales linearly with frame count rather than being bottlenecked by I/O or resolution.
-- **Batch processing efficiency**: With batch size 30, the system processes 400 frames in 14 batches (video 1) and 160 frames in 6 batches (video 2), maintaining stable GPU memory usage throughout inference.
+| Observation | Detail |
+|-------------|--------|
+| **Large cache-hit speedup** | Repeated requests with identical parameters return 11.01x–26.97x faster, confirming that parameter-aware caching skips the GPU pipeline entirely on a hit. The ratios run higher than the ingestion dedup (2.77x–7.90x) simply because the work avoided is far heavier — skipped GPU inference, not skipped I/O — so the two speedups measure different savings and are not directly comparable. |
+| **Cache-hit floor is the poll interval, not lookup cost** | Cache hits complete in ~1,006 ms regardless of video size or frame count. This is not lookup latency — the lookup itself is a sub-millisecond hash match — but an artifact of Submit-and-Poll: with a poll interval of 1 s, a result that is already cached still cannot be observed until the next poll tick. The constant ~1 s is the polling floor, and it confirms the lookup is independent of payload size rather than that it is slow. |
+| **Near real-time inference** | First-request processing tracks roughly real time: a 20-second target runs in ~27 s, an 8-second target in ~11 s, indicating the GPU is kept well utilized rather than stalling on I/O. |
+| **Consistent throughput** | Despite different source resolutions and durations, both videos sustain ~14.5 FPS, indicating the pipeline scales with frame count rather than being bottlenecked by resolution or I/O. |
 
 ## Parallel Pipeline Throughput
 
-This benchmark evaluates the end-to-end throughput of the system under concurrent load. Ten videos are submitted simultaneously, and each independently progresses through the complete processing pipeline without synchronization barriers:
+[This benchmark](../packages/benchmarks/src/benchmarks/parallel_pipeline.py) evaluates the end-to-end throughput of the system under concurrent load. Ten videos are submitted simultaneously, and each independently progresses through the complete processing pipeline without synchronization barriers:
 
 1. **Ingestion** — upload, validation, and database registration.
 2. **Pose estimation** — GPU-accelerated 3D human mesh recovery via the `ensam3d_inference` engine.
@@ -225,7 +230,11 @@ All videos were sourced from [Pexels](https://www.pexels.com/) and processed sim
 
 **Key Observations**
 
-- **Effective distributed execution**: A parallelism ratio of 6.36x demonstrates that the system processed the equivalent of ~14.4 minutes of sequential work in just ~2.3 minutes of real time. This confirms that the Celery-based orchestration layer successfully distributes tasks across heterogeneous worker pools (2 GPU inference workers + 1 CPU post-processing worker with concurrency 4).
-- **GPU as the bottleneck**: The longest stage for every video is estimation (32–123 sec), while visualization completes in 7–11 sec despite being CPU-bound. This indicates that the 2 inference workers with `concurrency=1` each form the critical path, while the 4 concurrent post-processing tasks in the default worker have sufficient headroom.
-- **Heterogeneous workload handling**: Videos range from 3.27 MB (720p, 10 sec) to 77.51 MB (4K, 26 sec), yet all complete successfully. The system dynamically schedules tasks as they become ready — a small video finishing ingestion immediately proceeds to estimation without waiting for larger uploads.
-- **Pipeline overlap**: The wall-clock time (135.68 sec) is only slightly longer than the single heaviest video's sequential time (135.58 sec for video #2), indicating that the system effectively overlapped the processing of all 10 videos rather than serializing them.
+| Observation | Detail |
+|-------------|--------|
+| **Concurrent execution, not serialization** | A parallelism ratio of 6.36x — ~14.4 minutes of summed stage time compressed into ~2.3 minutes of wall-clock — confirms the system runs many stages of many videos at once rather than one after another. Celery distributes tasks across the heterogeneous pools (2 GPU inference workers + 1 CPU post-processing worker at concurrency 4) as capacity frees up. |
+| **Per-video times are latency, not work** | The reported stage times are wall-clock from submission to completion, so they include time spent *waiting in the queue*, not just execution. Video #2's 122.90 s estimation is the clearest case: the inference itself is far shorter (a comparable 400-frame clip runs in ~27 s in the single-job benchmark) — the rest is the video waiting while the two inference workers cleared other jobs. Under 10 simultaneous submissions against 2 workers, queue wait dominates the heavier videos' totals. |
+| **Demand exceeds the inference pool, by design** | Estimation is the limiting stage not because the GPU is slow but because 10 jobs contend for 2 inference workers (concurrency 1 each), while the lighter visualization stage clears in 7–11 s with ample headroom in the 4-way post-processing worker. The bottleneck is pool capacity relative to load — exactly the dimension **NFR‑6** lets us scale by adding inference workers. |
+| **Dynamic, demand-driven scheduling** | Despite videos ranging from 3.27 MB (720p, 10 s) to 77.51 MB (4K, 26 s), all complete without manual coordination. A small video finishing ingestion proceeds straight to estimation without waiting on larger uploads — stages advance per video as each becomes ready. |
+| **Effective pipeline overlap** | Wall-clock time (135.68 s) barely exceeds the single heaviest video's end-to-end latency (135.58 s, video #2), meaning the other nine videos were processed almost entirely within the window that one heavy video occupied anyway — near-complete overlap rather than serialization. |
+| **Ratio is a floor, not a clean parallelism measure** | Because per-video latencies include mutual queue waiting, the summed total is inflated and the 6.36x ratio overstates pure compute parallelism somewhat. It remains a valid lower-bound proof that the system overlaps work heavily, but it should be read as "at least this concurrent," not as a precise speedup factor. |
