@@ -58,13 +58,6 @@ class PostgresConfig(BaseConfig):
         Determines whether ORM objects are expired immediately after
         transaction commit; disabled to retain attribute access post-commit.
         Default is False.
-    sync_database_url : str
-        Read-only property assembling the synchronous PostgreSQL connection
-        URI with psycopg2 driver; used exclusively by Alembic migrations.
-    async_database_url : str
-        Read-only property assembling the asynchronous PostgreSQL connection
-        URI with asyncpg driver; used by the application runtime for
-        non-blocking database operations.
     database_url : str
         Read-only property assembling the PostgreSQL connection URI with the
         psycopg (version 3) driver. The URL is mode-agnostic — the psycopg dialect

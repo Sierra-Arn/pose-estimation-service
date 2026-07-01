@@ -38,15 +38,18 @@ sync_session_factory = sessionmaker(
 @contextmanager
 def get_sync_db_session() -> Generator[Session, None, None]:
     """
-    Synchronous context manager for database session lifecycle management.
-    Opens a new session, yields it for ORM operations, and guarantees
-    cleanup with automatic rollback on failure. Successful execution
-    triggers an implicit commit upon context exit.
+    Manage the lifecycle of an sync database session for a single request.
+
+    Opens a new sync session, yields it for ORM operations, and guarantees
+    cleanup with automatic rollback on failure. Committing is the caller's
+    responsibility: a write that is not explicitly committed before the context
+    exits is discarded when the session closes. On any exception the session is
+    rolled back and the exception re-raised.
 
     Yields
     ------
     Session
-        Active synchronous session bound to the primary engine.
+        Active synchronous session bound to the sync engine.
     """
     with sync_session_factory() as db:
         try:
@@ -77,10 +80,13 @@ async_session_factory = async_sessionmaker(
 # @asynccontextmanager
 async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Asynchronous context manager for database session lifecycle management.
+    Manage the lifecycle of an async database session for a single request.
+
     Opens a new async session, yields it for ORM operations, and guarantees
-    cleanup with automatic rollback on failure. Successful execution
-    triggers an implicit commit upon context exit.
+    cleanup with automatic rollback on failure. Committing is the caller's
+    responsibility: a write that is not explicitly committed before the context
+    exits is discarded when the session closes. On any exception the session is
+    rolled back and the exception re-raised.
 
     Yields
     ------
