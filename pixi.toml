@@ -42,7 +42,7 @@ ffmpeg = ">=7.1.0,<9"
 
 sqlalchemy = ">=2.0.51,<3"
 alembic = ">=1.18.4,<2"
-psycopg-c = ">=3.2.10,<4"
+psycopg = ">=3.2.10,<4"
 
 redis-py = ">=8.0.1,<9"
 celery = ">=5.5.3,<6"

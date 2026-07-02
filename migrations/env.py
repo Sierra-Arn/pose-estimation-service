@@ -44,7 +44,7 @@ env_vars = {
 }
 
 db_url = (
-    f"postgresql+psycopg2://{env_vars['SUPERUSER_NAME']}:{quote_plus(env_vars['SUPERUSER_PASSWORD'])}"
+    f"postgresql+psycopg://{env_vars['SUPERUSER_NAME']}:{quote_plus(env_vars['SUPERUSER_PASSWORD'])}"
     f"@{env_vars['HOST']}:{env_vars['PORT']}/{env_vars['USER_DB_NAME']}"
 )
 
