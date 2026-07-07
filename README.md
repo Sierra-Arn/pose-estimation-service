@@ -109,7 +109,7 @@ pose-estimation-service/
 > **Note: on CUDA versions**  
 > The `>= 12.8` figure is a *driver* requirement, enforced through pixi's `system-requirements`. It was chosen because 12.8 was the default CUDA build shipped by PyTorch at the time development started (a plain `pip install torch` pulled the 12.8 build back then).
 
-> **Note: the benchmarking and profiling scripts report**  
+> **Note: the benchmarking scripts report**  
 > `CUDA Version: 12.6`. This is expected and not a mismatch: that value comes from `torch.version.cuda`, i.e. the CUDA version the PyTorch binary was *compiled against*, which is independent of the newer CUDA toolkit resolved into the environment. CUDA minor-version compatibility lets a 12.6 build run on any 12.x driver with the same major version.
 
 ### II. Setup
