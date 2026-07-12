@@ -23,8 +23,10 @@ def setup_logging() -> None:
     Configure structured JSON logging for the server process.
 
     Applies thresholds from ServerConfig to the root logger and all
-    Uvicorn sub-loggers. All handlers emit to stdout for downstream 
-    log aggregation.
+    Uvicorn sub-loggers. All handlers emit to stdout for downstream
+    log aggregation. The uvicorn.access logger is explicitly disabled
+    because the application implements its own access log middleware
+    with richer context including request timing and user identification.
 
     Returns
     -------
@@ -33,8 +35,20 @@ def setup_logging() -> None:
     """
     config = base_logging_config(server_config.log_level)
     config["loggers"] = {
-        "uvicorn": {"handlers": ["console"], "level": server_config.log_level, "propagate": False},
-        "uvicorn.error": {"handlers": ["console"], "level": server_config.log_level, "propagate": False},
-        "uvicorn.access": {"handlers": ["console"], "level": server_config.log_level, "propagate": False},
+        "uvicorn": {
+            "handlers": ["console"],
+            "level": server_config.log_level,
+            "propagate": False,
+        },
+        "uvicorn.error": {
+            "handlers": ["console"],
+            "level": server_config.log_level,
+            "propagate": False,
+        },
+        "uvicorn.access": {
+            "handlers": [],
+            "level": server_config.log_level,
+            "propagate": False,
+        },
     }
     logging.config.dictConfig(config)
